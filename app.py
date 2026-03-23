@@ -5,21 +5,21 @@ import os
 
 app = Flask(__name__)
 
+# Excel fayl
 file_name = "parallel_korpus.xlsx"
 
 df = pd.read_excel(file_name)
 df.columns = df.columns.str.strip()
 
+# Tekshirish
 if 'uz' not in df.columns or 'eng' not in df.columns:
-    raise ValueError(
-        f"Excel faylda 'uz' va 'eng' ustunlari bo‘lishi kerak. "
-        f"Hozirgi ustunlar: {list(df.columns)}"
-    )
+    raise ValueError("Excel faylda 'uz' va 'eng' ustunlari bo‘lishi kerak")
 
 df['uz'] = df['uz'].fillna('').astype(str)
 df['eng'] = df['eng'].fillna('').astype(str)
 
 
+# Normalizatsiya
 def normalize(text):
     text = str(text).lower().strip()
     text = text.replace("‘", "'").replace("’", "'").replace("`", "'")
@@ -28,88 +28,52 @@ def normalize(text):
     return text
 
 
+# Tokenlash
 def tokenize(text):
     text = str(text).lower().strip()
-    text = text.replace("‘", "'").replace("’", "'").replace("`", "'")
     return re.findall(r"\w+(?:'\w+)?", text)
 
 
-def highlight_text(text, query):
-    text = str(text)
-    query = str(query).strip()
-
+# Highlight
+def highlight(text, query):
     if not query:
         return text
-
     pattern = re.compile(re.escape(query), re.IGNORECASE)
     return pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", text)
 
 
+# Oldindan normalize
 df['uz_norm'] = df['uz'].apply(normalize)
 df['eng_norm'] = df['eng'].apply(normalize)
 
 
+# 🔥 MUHIM ROUTE (muammo shu edi)
 @app.route("/", methods=["GET", "POST"])
 def home():
     results = []
     query = ""
-    search_type = "all"
-    total_results = 0
-    show_all = False
 
     if request.method == "POST":
         query = request.form.get("query", "").strip()
-        search_type = request.form.get("search_type", "all")
-        show_all = request.form.get("show_all") == "1"
-
         query_norm = normalize(query)
 
         if query_norm:
-            if search_type == "uz":
-                filtered = df[df['uz_norm'].str.contains(query_norm, na=False)].copy()
-            elif search_type == "eng":
-                filtered = df[df['eng_norm'].str.contains(query_norm, na=False)].copy()
-            else:
-                filtered = df[
-                    df['uz_norm'].str.contains(query_norm, na=False) |
-                    df['eng_norm'].str.contains(query_norm, na=False)
-                ].copy()
+            filtered = df[
+                df['uz_norm'].str.contains(query_norm, na=False) |
+                df['eng_norm'].str.contains(query_norm, na=False)
+            ].copy()
 
-            total_results = len(filtered)
+            filtered['uz_h'] = filtered['uz'].apply(lambda x: highlight(x, query))
+            filtered['eng_h'] = filtered['eng'].apply(lambda x: highlight(x, query))
 
-            if not show_all:
-                filtered = filtered.head(10)
+            filtered['uz_tok'] = filtered['uz'].apply(tokenize)
+            filtered['eng_tok'] = filtered['eng'].apply(tokenize)
 
-            filtered['uz_highlight'] = filtered['uz'].apply(
-                lambda x: highlight_text(x, query)
-            )
-            filtered['eng_highlight'] = filtered['eng'].apply(
-                lambda x: highlight_text(x, query)
-            )
+            results = filtered.head(10).to_dict(orient="records")
 
-            filtered['uz_tokens'] = filtered['uz'].apply(tokenize)
-            filtered['eng_tokens'] = filtered['eng'].apply(tokenize)
-
-            filtered['uz_tokens_str'] = filtered['uz_tokens'].apply(
-                lambda x: " | ".join(x)
-            )
-            filtered['eng_tokens_str'] = filtered['eng_tokens'].apply(
-                lambda x: " | ".join(x)
-            )
-
-            results = filtered[
-                ['uz_highlight', 'eng_highlight', 'uz_tokens_str', 'eng_tokens_str']
-            ].to_dict(orient="records")
-
-    return render_template(
-        "index.html",
-        query=query,
-        results=results,
-        total_results=total_results,
-        search_type=search_type,
-        show_all=show_all
-    )
+    return render_template("index.html", results=results, query=query)
 
 
+# 🔥 Render uchun MUHIM
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

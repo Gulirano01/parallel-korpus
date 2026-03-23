@@ -1,26 +1,21 @@
 from flask import Flask, render_template, request
 import pandas as pd
 import re
+import os
 
 app = Flask(__name__)
 
-# Excel fayl manzili
 file_name = "parallel_korpus.xlsx"
 
-# Excelni o‘qish
 df = pd.read_excel(file_name)
-
-# Ustun nomlarini tozalash
 df.columns = df.columns.str.strip()
 
-# Kerakli ustunlarni tekshirish
 if 'uz' not in df.columns or 'eng' not in df.columns:
     raise ValueError(
         f"Excel faylda 'uz' va 'eng' ustunlari bo‘lishi kerak. "
         f"Hozirgi ustunlar: {list(df.columns)}"
     )
 
-# Bo‘sh qiymatlarni tozalash
 df['uz'] = df['uz'].fillna('').astype(str)
 df['eng'] = df['eng'].fillna('').astype(str)
 
@@ -50,7 +45,6 @@ def highlight_text(text, query):
     return pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", text)
 
 
-# Normalizatsiya ustunlari
 df['uz_norm'] = df['uz'].apply(normalize)
 df['eng_norm'] = df['eng'].apply(normalize)
 
@@ -73,10 +67,8 @@ def home():
         if query_norm:
             if search_type == "uz":
                 filtered = df[df['uz_norm'].str.contains(query_norm, na=False)].copy()
-
             elif search_type == "eng":
                 filtered = df[df['eng_norm'].str.contains(query_norm, na=False)].copy()
-
             else:
                 filtered = df[
                     df['uz_norm'].str.contains(query_norm, na=False) |
@@ -120,4 +112,4 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

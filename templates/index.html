@@ -4,487 +4,288 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parallel korpus qidiruv tizimi</title>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
-            background: linear-gradient(180deg, #fffafb 0%, #fff1f5 100%);
-            color: #4a2c3a;
+            background: #fffafc;
+            color: #222;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
-            max-width: 1050px;
-            margin: 0 auto;
-            padding: 28px 16px 40px;
+            width: 90%;
+            max-width: 1100px;
+            margin: 40px auto;
         }
 
-        .hero {
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid #ffd6e3;
-            border-radius: 26px;
-            padding: 28px;
-            box-shadow: 0 12px 30px rgba(255, 182, 193, 0.22);
-            margin-bottom: 24px;
+        h1 {
+            text-align: center;
+            color: #c2185b;
+            margin-bottom: 25px;
         }
 
-        .top-profile-btn {
-            display: inline-block;
-            background: #ffe4ec;
-            color: #c8507a;
-            padding: 9px 16px;
-            border-radius: 999px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 14px;
+        .form-box, .card, .author-box {
+            background: white;
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            margin-bottom: 22px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
             cursor: pointer;
-            border: 1px solid #f8bfd1;
-            transition: 0.2s ease;
+            font-size: 15px;
+            background: #f8c8dc;
+            color: #7a1b47;
         }
 
-        .top-profile-btn:hover {
-            background: #ffd9e6;
+        .tab-btn.active {
+            background: #c2185b;
+            color: white;
         }
 
-        .badge {
-            display: inline-block;
-            background: #fff0f5;
-            color: #c8507a;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 14px;
-            margin-left: 8px;
-            cursor: pointer;
-            border: 1px solid #f8bfd1;
-            transition: 0.2s ease;
-        }
-
-        .badge:hover {
-            background: #ffe4ec;
-        }
-
-        .hero h1 {
-            margin: 0 0 10px;
-            font-size: 36px;
-            color: #9d4062;
-        }
-
-        .subtitle {
-            margin: 0;
-            color: #7b5b67;
-            font-size: 16px;
-            line-height: 1.7;
-        }
-
-        .search-box {
+        .search-row {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-            margin-top: 24px;
         }
 
-        .search-box input[type="text"] {
+        input[type="text"] {
             flex: 1;
-            min-width: 240px;
-            padding: 15px 16px;
-            border: 1px solid #f6bfd0;
-            border-radius: 16px;
-            font-size: 16px;
-            outline: none;
-            background: #fffdfd;
-            color: #4a2c3a;
-        }
-
-        .search-box input[type="text"]:focus {
-            border-color: #f08cb0;
-            box-shadow: 0 0 0 4px rgba(240, 140, 176, 0.18);
-        }
-
-        .search-box select {
-            padding: 15px 14px;
-            border: 1px solid #f6bfd0;
-            border-radius: 16px;
+            min-width: 260px;
+            padding: 12px;
+            border: 1px solid #e1a9c2;
+            border-radius: 10px;
             font-size: 15px;
-            background: #fffdfd;
-            color: #6a4554;
         }
 
-        .btn {
-            border: none;
-            border-radius: 16px;
-            padding: 15px 20px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s ease;
-        }
-
-        .btn-search {
-            background: linear-gradient(135deg, #f78fb3, #f6a6c1);
+        .submit-btn {
+            background: #c2185b;
             color: white;
-            box-shadow: 0 8px 18px rgba(247, 143, 179, 0.35);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
         }
 
-        .btn-search:hover {
-            transform: translateY(-1px);
+        .submit-btn:hover {
+            background: #a3154c;
         }
 
-        .btn-clear {
-            background: #fff0f5;
-            color: #b45173;
-            text-decoration: none;
-            display: inline-block;
-            border: 1px solid #f8c8d8;
+        .result-count {
+            margin: 18px 0;
+            font-weight: bold;
+            color: #7a1b47;
         }
 
-        .meta {
-            margin-top: 14px;
-            color: #8a6674;
-            font-size: 14px;
-        }
-
-        .results-title {
-            margin: 24px 0 14px;
-            font-size: 28px;
-            color: #a14469;
-        }
-
-        .cards {
+        .parallel-row {
             display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 18px;
         }
 
-        .card {
-            background: rgba(255,255,255,0.97);
-            border: 1px solid #ffdce7;
-            border-radius: 22px;
-            padding: 22px;
-            box-shadow: 0 10px 24px rgba(255, 192, 203, 0.18);
-            position: relative;
-            overflow: hidden;
+        .parallel-box {
+            background: #fff4f8;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #f3c2d6;
         }
 
-        .card::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 6px;
-            height: 100%;
-            background: linear-gradient(180deg, #f78fb3, #f3b6c9);
+        .parallel-box h3, .author-box h2, .card h2 {
+            margin-top: 0;
+            color: #c2185b;
         }
 
-        .label {
-            font-size: 12px;
+        .token-list {
+            margin-top: 10px;
+            line-height: 2;
+        }
+
+        .token {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 4px;
+            background: #f8c8dc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .extra-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 10px 14px;
+            margin-top: 14px;
+        }
+
+        .extra-label {
             font-weight: bold;
-            color: #c8507a;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            margin-bottom: 8px;
+            color: #7a1b47;
         }
 
-        .text {
-            font-size: 17px;
-            line-height: 1.75;
-            word-break: break-word;
-            color: #4a2c3a;
-        }
-
-        .token-box {
-            background: #fff7fa;
-            border: 1px solid #ffdce7;
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 15px;
-            line-height: 1.7;
-            color: #7b5b67;
-            word-break: break-word;
-        }
-
-        .divider {
-            height: 1px;
-            background: linear-gradient(to right, transparent, #f8c8d8, transparent);
-            margin: 16px 0;
-        }
-
-        .empty {
-            background: white;
-            border: 1px solid #ffdce7;
-            padding: 22px;
-            border-radius: 18px;
-            color: #8a6674;
-            box-shadow: 0 8px 18px rgba(255, 192, 203, 0.16);
+        .extra-value {
+            background: #fff4f8;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #f3c2d6;
         }
 
         mark {
-            background: #ffe58f;
-            padding: 2px 5px;
-            border-radius: 6px;
+            background: #ffe082;
+            padding: 2px 4px;
+            border-radius: 4px;
         }
 
-        .show-more {
-            margin-top: 18px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #9a7481;
-            font-size: 14px;
-            padding-bottom: 10px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 999;
-            inset: 0;
-            background: rgba(80, 35, 55, 0.35);
-            padding: 20px;
-        }
-
-        .modal-box {
-            max-width: 380px;
-            margin: 8% auto;
-            background: white;
-            border-radius: 24px;
-            padding: 28px 24px;
-            text-align: center;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-            border: 1px solid #ffd6e3;
-        }
-
-        .modal-avatar {
-            width: 84px;
-            height: 84px;
-            margin: 0 auto 14px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f78fb3, #d96b93);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .modal-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #9d4062;
-            margin-bottom: 8px;
-        }
-
-        .modal-role {
-            font-size: 16px;
-            color: #7d5b67;
-            margin-bottom: 6px;
-        }
-
-        .modal-desc {
-            font-size: 14px;
-            color: #8a6674;
-            line-height: 1.6;
-            margin-bottom: 18px;
-        }
-
-        .modal-btn {
-            background: linear-gradient(135deg, #f78fb3, #f6a6c1);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            padding: 12px 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        @media (max-width: 640px) {
-            .hero h1 {
-                font-size: 27px;
+        @media (max-width: 768px) {
+            .parallel-row {
+                grid-template-columns: 1fr;
             }
 
-            .container {
-                padding: 14px;
-            }
-
-            .hero {
-                padding: 20px;
-            }
-
-            .search-box {
-                flex-direction: column;
-            }
-
-            .btn, .search-box select {
-                width: 100%;
-            }
-
-            .modal-box {
-                margin-top: 18%;
-            }
-
-            .text {
-                font-size: 16px;
-            }
-
-            .token-box {
-                font-size: 14px;
+            .extra-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="hero">
-            <div class="top-profile-btn" onclick="openProfile()">
-                Gulira’no Nuriddinova
+<div class="container">
+    <h1>Parallel korpus qidiruv tizimi</h1>
+
+    <div class="form-box">
+        <form method="POST">
+            <div class="tabs">
+                <button type="submit" name="active_tab" value="search"
+                        class="tab-btn {% if active_tab == 'search' %}active{% endif %}">
+                    Qidiruv
+                </button>
+                <button type="submit" name="active_tab" value="tokenize"
+                        class="tab-btn {% if active_tab == 'tokenize' %}active{% endif %}">
+                    Tokenizatsiya
+                </button>
+                <button type="submit" name="active_tab" value="extra"
+                        class="tab-btn {% if active_tab == 'extra' %}active{% endif %}">
+                    Extralingvistik teg
+                </button>
             </div>
 
-            <div class="badge" onclick="openBookInfo()">
-                Parallel Corpus Search
+            <div class="search-row">
+                <input type="text" name="query" placeholder="So'z yoki ibora kiriting..." value="{{ query }}">
+                <button type="submit" class="submit-btn">Izlash</button>
             </div>
+        </form>
+    </div>
 
-            <h1>Parallel korpus qidiruv tizimi</h1>
+    {% if query and results %}
+        <div class="result-count">{{ results|length }} ta natija topildi</div>
+    {% elif query %}
+        <div class="result-count">Natija topilmadi</div>
+    {% endif %}
 
-            <p class="subtitle">
-                O‘zbekcha yoki inglizcha so‘z, ibora yoki gap kiriting.
-                Tizim korpus ichidan mos natijalarni topib ko‘rsatadi.
-            </p>
-
-            <form method="POST" class="search-box">
-                <input
-                    type="text"
-                    name="query"
-                    placeholder="Masalan: kitob, book, salom"
-                    value="{{ query }}"
-                >
-
-                <select name="search_type">
-                    <option value="all" {% if search_type == 'all' %}selected{% endif %}>Hammasida qidirish</option>
-                    <option value="uz" {% if search_type == 'uz' %}selected{% endif %}>Faqat o‘zbekcha</option>
-                    <option value="eng" {% if search_type == 'eng' %}selected{% endif %}>Faqat inglizcha</option>
-                </select>
-
-                <button class="btn btn-search" type="submit">Qidirish</button>
-                <a href="/" class="btn btn-clear">Tozalash</a>
-            </form>
-
-            {% if query %}
-                <div class="meta">
-                    So‘rov: <strong>{{ query }}</strong>
-                </div>
-            {% endif %}
-        </div>
-
-        {% if results %}
-            <div class="results-title">Natijalar ({{ total_results }})</div>
-
-            <div class="cards">
-                {% for row in results %}
-                    <div class="card">
-                        <div class="label">O‘zbekcha</div>
-                        <div class="text">{{ row.uz_highlight | safe }}</div>
-
-                        <div class="divider"></div>
-
-                        <div class="label">Inglizcha</div>
-                        <div class="text">{{ row.eng_highlight | safe }}</div>
-
-                        <div class="divider"></div>
-
-                        <div class="label">O‘zbekcha tokenlar</div>
-                        <div class="token-box">{{ row.uz_tokens_str }}</div>
-
-                        <div class="divider"></div>
-
-                        <div class="label">Inglizcha tokenlar</div>
-                        <div class="token-box">{{ row.eng_tokens_str }}</div>
+    {% if active_tab == 'search' %}
+        {% for row in results %}
+            <div class="card">
+                <div class="parallel-row">
+                    <div class="parallel-box">
+                        <h3>O‘zbekcha</h3>
+                        <div>{{ row.uz_h | safe }}</div>
                     </div>
-                {% endfor %}
+                    <div class="parallel-box">
+                        <h3>English</h3>
+                        <div>{{ row.eng_h | safe }}</div>
+                    </div>
+                </div>
             </div>
+        {% endfor %}
+    {% endif %}
 
-            {% if total_results > 10 and not show_all %}
-                <form method="POST" class="show-more">
-                    <input type="hidden" name="query" value="{{ query }}">
-                    <input type="hidden" name="search_type" value="{{ search_type }}">
-                    <input type="hidden" name="show_all" value="1">
-                    <button class="btn btn-search" type="submit">Hammasini ko‘rish</button>
-                </form>
-            {% endif %}
+    {% if active_tab == 'tokenize' %}
+        {% for row in results %}
+            <div class="card">
+                <h2>Tokenizatsiya</h2>
 
-        {% elif query %}
-            <div class="empty">
-                Hech narsa topilmadi.
+                <div class="parallel-box" style="margin-bottom: 14px;">
+                    <strong>O‘zbekcha gap:</strong>
+                    <div style="margin-top:8px;">{{ row.uz_h | safe }}</div>
+                    <div class="token-list">
+                        {% for token in row.uz_tokens %}
+                            <span class="token">{{ token }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="parallel-box">
+                    <strong>English gap:</strong>
+                    <div style="margin-top:8px;">{{ row.eng_h | safe }}</div>
+                    <div class="token-list">
+                        {% for token in row.eng_tokens %}
+                            <span class="token">{{ token }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-        {% endif %}
+        {% endfor %}
+    {% endif %}
 
-        <div class="footer">
-            Parallel corpus interface • Owner: Gulira’no Nuriddinova
-        </div>
+    {% if active_tab == 'extra' %}
+        {% for row in results %}
+            <div class="card">
+                <h2>Extralingvistik teg</h2>
+
+                <div class="parallel-row" style="margin-bottom: 16px;">
+                    <div class="parallel-box">
+                        <h3>O‘zbekcha</h3>
+                        <div>{{ row.uz_h | safe }}</div>
+                    </div>
+                    <div class="parallel-box">
+                        <h3>English</h3>
+                        <div>{{ row.eng_h | safe }}</div>
+                    </div>
+                </div>
+
+                <div class="extra-grid">
+                    <div class="extra-label">Kitob</div>
+                    <div class="extra-value">{{ extra_block.kitob }}</div>
+
+                    <div class="extra-label">Muallif</div>
+                    <div class="extra-value">{{ extra_block.muallif }}</div>
+
+                    <div class="extra-label">Janr</div>
+                    <div class="extra-value">{{ extra_block.janr }}</div>
+
+                    <div class="extra-label">Uslub</div>
+                    <div class="extra-value">{{ extra_block.uslub }}</div>
+
+                    <div class="extra-label">Auditoriya</div>
+                    <div class="extra-value">{{ extra_block.auditoriya }}</div>
+
+                    <div class="extra-label">Nashr yili</div>
+                    <div class="extra-value">{{ extra_block.nashr_yili }}</div>
+
+                    <div class="extra-label">Nashriyot</div>
+                    <div class="extra-value">{{ extra_block.nashriyot }}</div>
+
+                    <div class="extra-label">Hajmi</div>
+                    <div class="extra-value">{{ extra_block.hajmi }}</div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="author-box">
+        <h2>Muallif haqida</h2>
+        <p>{{ author_info }}</p>
     </div>
-
-    <!-- MUALLIF MODAL -->
-    <div id="profileModal" class="modal" onclick="closeProfileOutside(event)">
-        <div class="modal-box">
-            <div class="modal-avatar">GN</div>
-            <div class="modal-name">Gulira’no Nuriddinova</div>
-            <div class="modal-role">NLP tadqiqotchisi</div>
-            <div class="modal-role">Kompyuter lingvistikasi mutaxassisi</div>
-            <div class="modal-desc">
-                Parallel korpuslar, sintaktik annotatsiya va tabiiy tilni qayta ishlash modellarini baholash bilan shug‘ullanadi.
-            </div>
-            <button class="modal-btn" onclick="closeProfile()">Yopish</button>
-        </div>
-    </div>
-
-    <!-- KITOB HAQIDA MODAL -->
-    <div id="bookModal" class="modal" onclick="closeBookOutside(event)">
-        <div class="modal-box">
-            <div class="modal-avatar">IE</div>
-            <div class="modal-name">Parallel Corpus Search</div>
-            <div class="modal-desc">
-                “Ikki eshik orasi” romani asosida tayyorlandi.
-            </div>
-            <button class="modal-btn" onclick="closeBookInfo()">Yopish</button>
-        </div>
-    </div>
-
-    <script>
-        function openProfile() {
-            document.getElementById("profileModal").style.display = "block";
-        }
-
-        function closeProfile() {
-            document.getElementById("profileModal").style.display = "none";
-        }
-
-        function closeProfileOutside(event) {
-            const modal = document.getElementById("profileModal");
-            if (event.target === modal) {
-                closeProfile();
-            }
-        }
-
-        function openBookInfo() {
-            document.getElementById("bookModal").style.display = "block";
-        }
-
-        function closeBookInfo() {
-            document.getElementById("bookModal").style.display = "none";
-        }
-
-        function closeBookOutside(event) {
-            const modal = document.getElementById("bookModal");
-            if (event.target === modal) {
-                closeBookInfo();
-            }
-        }
-    </script>
+</div>
 </body>
 </html>

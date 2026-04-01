@@ -1,87 +1,132 @@
 from flask import Flask, render_template, request
 import pandas as pd
 import re
-import os
+import html
 
 app = Flask(__name__)
 
-df = pd.read_excel("parallel_korpus.xlsx")
-df.columns = df.columns.str.strip().str.lower()
+FILE_NAME = "parallel_korpus.xlsx"
+df = pd.read_excel(FILE_NAME)
 
-if "uz" not in df.columns or "eng" not in df.columns:
-    raise ValueError(f"Excel faylda 'uz' va 'eng' ustunlari bo‘lishi kerak. Hozirgi ustunlar: {list(df.columns)}")
+df.columns = [str(col).strip().lower() for col in df.columns]
 
-df["uz"] = df["uz"].fillna("").astype(str)
-df["eng"] = df["eng"].fillna("").astype(str)
+required_columns = ["uz", "eng"]
+for col in required_columns:
+    if col not in df.columns:
+        raise ValueError(f"Excel faylda '{col}' ustuni topilmadi.")
 
-def normalize(text):
-    text = str(text).lower().strip()
-    text = text.replace("‘", "'").replace("’", "'").replace("`", "'")
-    text = re.sub(r"[^\w\s']", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
+for col in ["uz", "eng"]:
+    df[col] = df[col].fillna("").astype(str)
+
+def normalize(text: str) -> str:
+    if not isinstance(text, str):
+        return ""
+    text = text.lower().strip()
+    text = text.replace("’", "'").replace("`", "'").replace("ʻ", "'").replace("ʼ", "'").replace("‘", "'")
+    text = re.sub(r"\s+", " ", text)
     return text
 
-def tokenize(text):
-    text = str(text).lower().strip()
-    text = text.replace("‘", "'").replace("’", "'").replace("`", "'")
-    return re.findall(r"\w+(?:'\w+)?", text)
+def tokenize(text: str):
+    text = normalize(text)
+    pattern = r"[a-zA-ZÀ-ÿА-Яа-яO'oʻʻ’‘`ʻʼ\-]+(?:'[a-zA-ZÀ-ÿА-Яа-яO'oʻʻ’‘`ʻʼ\-]+)?|\d+|[^\w\s]"
+    return re.findall(pattern, text, flags=re.UNICODE)
 
-def highlight(text, query):
-    if not query:
-        return str(text)
-    pattern = re.compile(re.escape(query), re.IGNORECASE)
-    return pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", str(text))
+def contains_exact_word(text: str, query: str) -> bool:
+    query_norm = normalize(query)
+    tokens = tokenize(text)
+    return query_norm in tokens
 
-df["uz_norm"] = df["uz"].apply(normalize)
-df["eng_norm"] = df["eng"].apply(normalize)
+def contains_phrase(text: str, query: str) -> bool:
+    return normalize(query) in normalize(text)
+
+def highlight_exact_word(text: str, query: str) -> str:
+    if not query.strip():
+        return html.escape(text)
+
+    query_norm = normalize(query)
+    parts = re.findall(r"\s+|[^\s]+", text, flags=re.UNICODE)
+
+    result = []
+    for part in parts:
+        clean = normalize(re.sub(r"^[^\w']+|[^\w']+$", "", part))
+        if clean == query_norm:
+            result.append(f"<mark>{html.escape(part)}</mark>")
+        else:
+            result.append(html.escape(part))
+    return "".join(result)
+
+def highlight_phrase(text: str, query: str) -> str:
+    if not query.strip():
+        return html.escape(text)
+
+    escaped_text = html.escape(text)
+    escaped_query = html.escape(query)
+    pattern = re.compile(re.escape(escaped_query), re.IGNORECASE)
+    return pattern.sub(lambda m: f"<mark>{m.group(0)}</mark>", escaped_text)
+
+def build_extralinguistic_block():
+    return {
+        "kitob": "Ikki eshik orasi",
+        "muallif": "O‘tkir Hoshimov",
+        "janr": "Roman",
+        "uslub": "Badiiy",
+        "auditoriya": "Keng omma",
+        "nashr_yili": "1985-yil",
+        "nashriyot": "Sharq",
+        "hajmi": "624 bet"
+    }
+
+AUTHOR_INFO = """
+Ushbu parallel korpus va qidiruv tizimi Gulira'no Nuriddinova tomonidan ishlab chiqilgan.
+Tizim o‘zbek va ingliz tilidagi parallel matnlar asosida qidiruvni amalga oshiradi,
+qidirilgan birliklarni konkordans ko‘rinishida ko‘rsatadi hamda tokenizatsiya va
+extralingvistik ma’lumotlarni alohida bo‘limlarda taqdim etadi.
+"""
 
 @app.route("/", methods=["GET", "POST"])
 def home():
     results = []
     query = ""
-    search_type = "all"
-    total_results = 0
-    show_all = False
+    active_tab = "search"
+    extra_block = build_extralinguistic_block()
 
     if request.method == "POST":
         query = request.form.get("query", "").strip()
-        search_type = request.form.get("search_type", "all")
-        show_all = request.form.get("show_all") == "1"
-        query_norm = normalize(query)
+        active_tab = request.form.get("active_tab", "search")
 
-        if query_norm:
-            if search_type == "uz":
-                filtered = df[df["uz_norm"].str.contains(query_norm, na=False)].copy()
-            elif search_type == "eng":
-                filtered = df[df["eng_norm"].str.contains(query_norm, na=False)].copy()
-            else:
+        if query:
+            query_tokens = tokenize(query)
+
+            if len(query_tokens) == 1:
                 filtered = df[
-                    df["uz_norm"].str.contains(query_norm, na=False) |
-                    df["eng_norm"].str.contains(query_norm, na=False)
+                    df["uz"].apply(lambda x: contains_exact_word(x, query)) |
+                    df["eng"].apply(lambda x: contains_exact_word(x, query))
                 ].copy()
 
-            total_results = len(filtered)
+                filtered["uz_h"] = filtered["uz"].apply(lambda x: highlight_exact_word(x, query))
+                filtered["eng_h"] = filtered["eng"].apply(lambda x: highlight_exact_word(x, query))
+            else:
+                filtered = df[
+                    df["uz"].apply(lambda x: contains_phrase(x, query)) |
+                    df["eng"].apply(lambda x: contains_phrase(x, query))
+                ].copy()
 
-            if not show_all:
-                filtered = filtered.head(10)
+                filtered["uz_h"] = filtered["uz"].apply(lambda x: highlight_phrase(x, query))
+                filtered["eng_h"] = filtered["eng"].apply(lambda x: highlight_phrase(x, query))
 
-            filtered["uz_highlight"] = filtered["uz"].apply(lambda x: highlight(x, query))
-            filtered["eng_highlight"] = filtered["eng"].apply(lambda x: highlight(x, query))
-            filtered["uz_tokens_str"] = filtered["uz"].apply(lambda x: " | ".join(tokenize(x)))
-            filtered["eng_tokens_str"] = filtered["eng"].apply(lambda x: " | ".join(tokenize(x)))
+            filtered["uz_tokens"] = filtered["uz"].apply(tokenize)
+            filtered["eng_tokens"] = filtered["eng"].apply(tokenize)
 
-            results = filtered[
-                ["uz_highlight", "eng_highlight", "uz_tokens_str", "eng_tokens_str"]
-            ].to_dict(orient="records")
+            results = filtered.to_dict(orient="records")
 
     return render_template(
         "index.html",
-        query=query,
         results=results,
-        total_results=total_results,
-        search_type=search_type,
-        show_all=show_all
+        query=query,
+        active_tab=active_tab,
+        author_info=AUTHOR_INFO,
+        extra_block=extra_block
     )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+    app.run(debug=True)
